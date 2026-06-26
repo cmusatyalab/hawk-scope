@@ -1,4 +1,4 @@
-# hawk-scope
+# Hawk Scope
 
 Server that slices subsets out of a larger webdataset collection.
 
