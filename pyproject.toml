@@ -29,7 +29,7 @@ dev = [
 ]
 
 [project.scripts]
-hawk_scope = "hawk_scope.cli:app"
+hawk-scope = "hawk_scope.cli:app"
 
 [tool.ruff]
 target-version = "py310"

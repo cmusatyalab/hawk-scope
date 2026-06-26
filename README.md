@@ -23,15 +23,15 @@ uv sync          # install dependencies from uv.lock
 ### CLI
 
 ```bash
-uv run hawk_scope wids <scope>     # print WIDS descriptor JSON for a scope
-uv run hawk_scope shard <scope>    # generate a local tar shard file
-uv run hawk_scope serve            # start the web server (port 5000)
+uv run hawk-scope wids <scope>     # print WIDS descriptor JSON for a scope
+uv run hawk-scope shard <scope>    # generate a local tar shard file
+uv run hawk-scope serve            # start the web server (port 5000)
 ```
 
 ### Web server
 
 ```bash
-uv run hawk_scope serve
+uv run hawk-scope serve
 ```
 
 Serves on `0.0.0.0:5000` by default. Three endpoints:
