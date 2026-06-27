@@ -12,11 +12,11 @@ from . import settings
 
 SCOPEDB_SCHEMA = """\
 BEGIN;
-CREATE TABLE IF NOT EXISTS shard(
+CREATE TABLE shard(
     id INTEGER PRIMARY KEY,
     url TEXT UNIQUE
 );
-CREATE TABLE IF NOT EXISTS object(
+CREATE TABLE object(
     id INTEGER PRIMARY KEY,
     key TEXT UNIQUE,
     shard_id INTEGER NOT NULL,
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS object(
     end INTEGER,
     FOREIGN KEY (shard_id) REFERENCES shard(id)
 );
-CREATE TABLE IF NOT EXISTS scope(
+CREATE TABLE scope(
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE
 );
-CREATE TABLE IF NOT EXISTS scopelist(
+CREATE TABLE scopelist(
     scope_id INTEGER,
     object_id INTEGER,
     PRIMARY KEY (scope_id, object_id),
