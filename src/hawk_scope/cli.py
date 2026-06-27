@@ -7,12 +7,13 @@ import asyncio
 import json
 
 import typer
+from rich import print
 from tqdm.asyncio import tqdm
 
 from .slicer import generate_wids_descriptor, get_items_in_scope, generate_shard
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 
 
 async def create_wids(scope: str) -> None:
@@ -49,10 +50,11 @@ def test_shard(scope: str, shard: int = 0) -> None:
 
 
 @app.command()
-def serve() -> None:
+def serve(host: str = "0.0.0.0", port: int = 5000) -> None:
+    """run a webserver instance"""
     import uvicorn
 
-    uvicorn.run("hawk_scope.web:app", host="0.0.0.0", port=5000, log_level="info")
+    uvicorn.run("hawk_scope.web:app", host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":

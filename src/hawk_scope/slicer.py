@@ -59,7 +59,9 @@ async def get_object(
     return response.content
 
 
-async def generate_shard(items: AsyncIterator[tuple[str, int, int]]) -> AsyncIterator[bytes]:
+async def generate_shard(
+    items: AsyncIterator[tuple[str, int, int]],
+) -> AsyncIterator[bytes]:
     session = niquests.AsyncSession()
 
     # sliding window for url range-request fetches

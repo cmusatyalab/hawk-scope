@@ -69,7 +69,9 @@ async def count_items_in_scope(scope: str) -> int:
         return result.scalars().one()
 
 
-async def get_items_in_scope(scope: str, shard: int) -> AsyncIterator[tuple[str, int, int]]:
+async def get_items_in_scope(
+    scope: str, shard: int
+) -> AsyncIterator[tuple[str, int, int]]:
     limit = settings.BATCH_SIZE
     offset = shard * settings.BATCH_SIZE
 
