@@ -188,6 +188,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "niquests" },
+    { name = "rich" },
     { name = "starlette" },
     { name = "tqdm" },
     { name = "typer" },
@@ -203,6 +204,7 @@ dev = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "niquests", specifier = ">=3.19.1" },
+    { name = "rich", specifier = ">=15.0.0" },
     { name = "starlette", specifier = ">=1.3.1" },
     { name = "tqdm", specifier = ">=4.67.3" },
     { name = "typer", specifier = ">=0.26.7" },
