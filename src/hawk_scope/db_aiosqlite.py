@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import aiosqlite
 
 from . import settings
-
 
 SCOPEDB_SCHEMA = """\
 BEGIN;
@@ -48,15 +47,17 @@ async def create_scope_db() -> None:
 
 
 async def count_items_in_scope(scope: str) -> int:
-    async with aiosqlite.connect(SCOPEDB) as con:
-        async with con.execute(
+    async with (
+        aiosqlite.connect(SCOPEDB) as con,
+        con.execute(
             "SELECT COUNT(*) FROM scopelist "
             "JOIN scope ON scope.id = scopelist.scope_id "
             "WHERE scope.name = ?",
             (scope,),
-        ) as cur:
-            result = await cur.fetchone()
-            return result[0]
+        ) as cur,
+    ):
+        result = await cur.fetchone()
+        return result[0]
 
 
 async def get_items_in_scope(
@@ -65,14 +66,16 @@ async def get_items_in_scope(
     limit = settings.BATCH_SIZE
     offset = shard * settings.BATCH_SIZE
 
-    async with aiosqlite.connect(SCOPEDB) as con:
-        async with con.execute(
+    async with (
+        aiosqlite.connect(SCOPEDB) as con,
+        con.execute(
             "SELECT shard.url, object.offset, object.end FROM object "
             "JOIN shard ON object.shard_id = shard.id "
             "JOIN scopelist ON object.id = scopelist.object_id "
             "JOIN scope ON scope.id = scopelist.scope_id "
             "WHERE scope.name = ? LIMIT ? OFFSET ?",
             (scope, limit, offset),
-        ) as cur:
-            async for row in cur:
-                yield row[0], row[1], row[2]
+        ) as cur,
+    ):
+        async for row in cur:
+            yield row[0], row[1], row[2]

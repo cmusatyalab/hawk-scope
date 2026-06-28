@@ -4,18 +4,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncIterator, Any
+from collections.abc import AsyncIterator
+from contextlib import suppress
+from typing import Any
 
 import niquests
 
 from . import settings
-from .db_aiosqlite import count_items_in_scope, get_items_in_scope
-
-__all__ = [
-    "generate_wids_descriptor",
-    "generate_shard",
-    "get_items_in_scope",
-]
+from .db import count_items_in_scope
 
 
 async def generate_wids_descriptor(scope: str, base_url: str) -> dict[str, Any]:
@@ -66,15 +62,15 @@ async def generate_shard(
 
     # sliding window for url range-request fetches
     tasks = []
-    for i in range(settings.FETCH_WINDOW):
+    for _ in range(settings.FETCH_WINDOW):
         try:
-            tasks.append(asyncio.create_task(get_object(session, *await anext(items))))
+            url, start, end = await anext(items)
+            tasks.append(asyncio.create_task(get_object(session, url, start, end)))
         except StopAsyncIteration:
             break
 
     while tasks:
         yield await tasks.pop(0)
-        try:
-            tasks.append(asyncio.create_task(get_object(session, *await anext(items))))
-        except StopAsyncIteration:
-            pass
+        with suppress(StopAsyncIteration):
+            url, start, end = await anext(items)
+            tasks.append(asyncio.create_task(get_object(session, url, start, end)))

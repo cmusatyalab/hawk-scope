@@ -12,14 +12,14 @@
 # ]
 # ///
 
-import tarfile
 import sqlite3
-from typing import Iterator, NamedTuple
+import tarfile
+from collections.abc import Iterator
+from typing import NamedTuple
 
 import niquests
 from braceexpand import braceexpand
 from tqdm import tqdm
-
 
 SCHEMA = """\
 BEGIN;

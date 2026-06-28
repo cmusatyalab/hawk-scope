@@ -8,7 +8,6 @@ import typer
 from .test import app as test_app
 from .web import cli as web_app
 
-
 app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(web_app)

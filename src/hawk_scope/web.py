@@ -12,7 +12,8 @@ from starlette.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.routing import Route
 
 from . import settings
-from .slicer import generate_wids_descriptor, get_items_in_scope, generate_shard
+from .db import get_items_in_scope
+from .slicer import generate_shard, generate_wids_descriptor
 
 if TYPE_CHECKING:
     from starlette.requests import Request

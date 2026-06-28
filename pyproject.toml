@@ -45,6 +45,16 @@ include = [
     "tests/**/*.py",
 ]
 
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # Pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
+]
+
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12"]
 build-backend = "uv_build"

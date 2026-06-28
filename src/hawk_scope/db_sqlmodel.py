@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import Field, SQLModel, func, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from . import settings
 

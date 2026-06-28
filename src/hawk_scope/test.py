@@ -9,8 +9,8 @@ import typer
 from rich import print
 from tqdm.asyncio import tqdm
 
-from .slicer import generate_wids_descriptor, get_items_in_scope, generate_shard
-
+from .db import get_items_in_scope
+from .slicer import generate_shard, generate_wids_descriptor
 
 app = typer.Typer(help="Test wids and shard generators")
 
