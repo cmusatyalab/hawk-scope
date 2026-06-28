@@ -12,7 +12,7 @@ from tqdm.asyncio import tqdm
 from .db import get_items_in_scope
 from .slicer import generate_shard, generate_wids_descriptor
 
-app = typer.Typer(help="Test wids and shard generators")
+app = typer.Typer(help="Test wids and shard generators.")
 
 
 async def create_wids(scope: str) -> None:

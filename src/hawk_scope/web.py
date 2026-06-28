@@ -53,7 +53,7 @@ cli = typer.Typer()
 
 @cli.command()
 def serve(host: str = "0.0.0.0", port: int = 5000) -> None:
-    """Run a webserver instance"""
+    """Run a webserver instance to generate scoped datasets."""
     import uvicorn
 
     uvicorn.run("hawk_scope.web:app", host=host, port=port, log_level="info")

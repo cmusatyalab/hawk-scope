@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 
 from sqlalchemy import ForeignKey, func, select
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, create_async_engine
@@ -53,6 +53,18 @@ engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
 async def create_scope_db() -> None:
     async with engine.begin() as con:
         await con.run_sync(SQLTable.metadata.create_all)
+
+
+async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -> None:
+    async with AsyncSession(engine) as session:
+        shard = Shard(url=shard)
+        await session.add(shard)
+        await session.commit()
+
+        for key, off, end in items:
+            obj = Object(key=key, shard_id=shard.id, offset=off, end=end)
+            await session.add(obj)
+        await session.commit()
 
 
 async def count_items_in_scope(scope: str) -> int:

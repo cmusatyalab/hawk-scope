@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 
 import aiosqlite
 
@@ -11,11 +11,11 @@ from . import settings
 
 SCOPEDB_SCHEMA = """\
 BEGIN;
-CREATE TABLE shard(
+CREATE TABLE shard (
     id INTEGER PRIMARY KEY,
     url TEXT UNIQUE
 );
-CREATE TABLE object(
+CREATE TABLE object (
     id INTEGER PRIMARY KEY,
     key TEXT UNIQUE,
     shard_id INTEGER NOT NULL,
@@ -23,11 +23,11 @@ CREATE TABLE object(
     end INTEGER,
     FOREIGN KEY (shard_id) REFERENCES shard(id)
 );
-CREATE TABLE scope(
+CREATE TABLE scope (
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE
 );
-CREATE TABLE scopelist(
+CREATE TABLE scopelist (
     scope_id INTEGER,
     object_id INTEGER,
     PRIMARY KEY (scope_id, object_id),
@@ -44,6 +44,18 @@ SCOPEDB = settings.DATABASE_URL.removeprefix("sqlite+aiosqlite:///")
 async def create_scope_db() -> None:
     async with aiosqlite.connect(SCOPEDB) as con:
         await con.executescript(SCOPEDB_SCHEMA)
+
+
+async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -> None:
+    async with aiosqlite.connect(SCOPEDB) as con:
+        result = await con.execute("INSERT INTO shard (url) VALUES(?)", (shard,))
+        shard_id = result.lastrowid
+
+        for key, off, end in items:
+            await con.execute(
+                "INSERT INTO object (key, shard_id, offset, end) VALUES (?, ?, ?, ?)",
+                (key, shard_id, off, end),
+            )
 
 
 async def count_items_in_scope(scope: str) -> int:
