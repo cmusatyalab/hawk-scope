@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Carnegie Mellon University
 # SPDX-License-Identifier: GPL-2.0-only
 
-# This might work, but probably only with asyncio backends
-
 from __future__ import annotations
 
 from typing import AsyncIterator
@@ -85,7 +83,6 @@ async def get_items_in_scope(
             .limit(limit)
             .offset(offset)
         )
-        if not settings.ORDER_BY_SCOPE:
-            stmt = stmt.order_by(Shard.id, Object.offset)
-        async for url, offset, end in session.execute(stmt):
+        result = await session.execute(stmt)
+        for url, offset, end in result:
             yield url, offset, end

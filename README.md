@@ -62,8 +62,8 @@ cli.py          → CLI entry (typer). Commands: wids, shard, serve
 web.py          → Starlette app with 3 routes: /, /{scope}.json, /{scope}-{shard}.tar
 slicer.py       → Core logic: generate WIDS descriptors, stream shard tars
 db_aiosqlite.py → Active DB layer (aiosqlite, raw SQL)
-db_sqlalchemy.py → Untested alternative (SQLAlchemy ORM)
-db_sqlmodel.py   → Untested alternative (SQLModel)
+db_sqlalchemy.py → Alternative DB layer (SQLAlchemy ORM)
+db_sqlmodel.py   → Alternative DB layer (SQLModel)
 settings.py      → Env-backed config
 ```
 
