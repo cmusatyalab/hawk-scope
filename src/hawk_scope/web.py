@@ -6,6 +6,7 @@ from __future__ import annotations
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
+import typer
 from starlette.applications import Starlette
 from starlette.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.routing import Route
@@ -45,3 +46,17 @@ app = Starlette(
         Route("/{scope}-{shard:int}.tar", get_shard, name="shard"),
     ],
 )
+
+cli = typer.Typer()
+
+
+@cli.command()
+def serve(host: str = "0.0.0.0", port: int = 5000) -> None:
+    """Run a webserver instance"""
+    import uvicorn
+
+    uvicorn.run("hawk_scope.web:app", host=host, port=port, log_level="info")
+
+
+if __name__ == "__main__":
+    cli()

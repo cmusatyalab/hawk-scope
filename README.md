@@ -23,9 +23,9 @@ uv sync          # install dependencies from uv.lock
 ### CLI
 
 ```bash
-uv run hawk-scope test-wids <scope>   # print WIDS descriptor JSON for a scope
-uv run hawk-scope test-shard <scope>  # generate a local tar shard file
 uv run hawk-scope serve               # start the web server (port 5000)
+uv run hawk-scope test wids <scope>   # print WIDS descriptor JSON for a scope
+uv run hawk-scope test shard <scope>  # generate a local tar shard file
 ```
 
 ### Web server
@@ -58,9 +58,10 @@ All config comes from `.env` via `starlette.config.Config`:
 ## Architecture
 
 ```
-cli.py          → CLI entry (typer). Commands: wids, shard, serve
+cli.py          → CLI entry (typer).
 web.py          → Starlette app with 3 routes: /, /{scope}.json, /{scope}-{shard}.tar
 slicer.py       → Core logic: generate WIDS descriptors, stream shard tars
+test.py         → CLI commands: test wids, test shard
 db_aiosqlite.py → Active DB layer (aiosqlite, raw SQL)
 db_sqlalchemy.py → Alternative DB layer (SQLAlchemy ORM)
 db_sqlmodel.py   → Alternative DB layer (SQLModel)
