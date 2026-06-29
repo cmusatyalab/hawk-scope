@@ -142,7 +142,8 @@ async def count_items_in_scope(scope: str) -> int:
             "WHERE scope.name = ?",
             (scope,),
         )
-        return cur.fetchone()[0]
+        result = await cur.fetchone()
+        return result[0]
 
 
 async def get_items_in_scope(
@@ -152,7 +153,7 @@ async def get_items_in_scope(
     offset = shard * settings.BATCH_SIZE
 
     async with aiosqlite.connect(SCOPEDB) as con:
-        cur = con.execute(
+        cur = await con.execute(
             "SELECT shard.url, object.offset, object.end FROM object "
             "JOIN shard ON object.shard_id = shard.id "
             "JOIN scopelist ON object.id = scopelist.object_id "
