@@ -16,11 +16,19 @@ from .db_aiosqlite import (
     build_shard_index,
     count_items_in_scope,
     create_scope_db,
+    delete_scope,
+    export_scope,
     get_items_in_scope,
+    import_scope,
+    list_scopes,
 )
 
 __all__ = [
     "build_shard_index",
+    "list_scopes",
+    "import_scope",
+    "export_scope",
+    "delete_scope",
     "create_scope_db",
     "count_items_in_scope",
     "get_items_in_scope",
