@@ -12,7 +12,7 @@ import typer
 from braceexpand import braceexpand
 from tqdm import tqdm
 
-from .db_aiosqlite import (
+from .db_sqlmodel import (
     build_shard_index,
     count_items_in_scope,
     create_scope_db,
@@ -57,7 +57,7 @@ def generate_shard_index(url: str) -> Iterator[tuple[str, int, int]]:
                 yield obj_key, obj_off, obj_end
 
 
-app = typer.Typer(help="Manipulate the scope database.")
+app = typer.Typer(help="Manipulate the scope database.", no_args_is_help=True)
 
 
 @app.command()

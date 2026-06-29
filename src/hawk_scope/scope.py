@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from .db import delete_scope, export_scope, import_scope, list_scopes
 
-app = typer.Typer(help="Add/remove scopes.")
+app = typer.Typer(help="Add/remove scopes.", no_args_is_help=True)
 
 
 @app.command()
@@ -33,9 +33,9 @@ def list() -> None:
     asyncio.run(list_())
 
 
-@app.command()
-def add(scopefile: Path, scope: str | None = None) -> None:
-    """Add a new scope."""
+@app.command("import")
+def import_(scopefile: Path, scope: str | None = None) -> None:
+    """Import a new scope from a file."""
     if scope is None:
         scope = scopefile.stem
 
@@ -50,18 +50,12 @@ def add(scopefile: Path, scope: str | None = None) -> None:
 
 @app.command()
 def export(scope: str) -> None:
-    """Export a scope to a text file."""
-    async def export_to_file(scope: str) -> None:
-        out = Path(scope).with_suffix(".scope")
-        if not out.exists():
-            with out.open("w") as out:
-                async for key in export_scope(scope):
-                    out.write(f"{key}\n")
-        else:
-            msg = f"{out} already exists."
-            raise typer.Exit(msg)
+    """Export a scope to stdout."""
+    async def export_to_stdout(scope: str) -> None:
+        async for key in export_scope(scope):
+            print(key)
 
-    asyncio.run(export_to_file(scope))
+    asyncio.run(export_to_stdout(scope))
 
 
 @app.command()
