@@ -50,6 +50,7 @@ class Object(SQLTable):
 
 engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
 
+
 async def create_scope_db() -> None:
     async with engine.begin() as con:
         await con.run_sync(SQLTable.metadata.create_all)
@@ -63,10 +64,12 @@ async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -
 
         # There is no real reason to batch here, I think
         # the typical shard contains only about 10k-25k object
-        session.add_all([
-            Object(key=key, shard_id=shard.id, offset=off, end=end)
-            for key, off, end in items
-        ])
+        session.add_all(
+            [
+                Object(key=key, shard_id=shard.id, offset=off, end=end)
+                for key, off, end in items
+            ]
+        )
         await session.commit()
 
 
@@ -95,24 +98,21 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
         for batch in batched(items, 900):
             stmt = select(Object).where(Object.key.in_(batch))
             results = await session.execute(stmt)
-            session.add_all([
-                ScopeList(scope_id=scope_obj.id, object_id=obj.id)
-                for obj, in results
-            ])
+            session.add_all(
+                [
+                    ScopeList(scope_id=scope_obj.id, object_id=obj.id)
+                    for (obj,) in results
+                ]
+            )
             session.flush()
         await session.commit()
 
 
 async def export_scope(scope: str) -> AsyncIterator[str]:
     async with AsyncSession(engine) as session:
-        stmt = (
-            select(Object.key)
-            .join(ScopeList)
-            .join(Scope)
-            .where(Scope.name == scope)
-        )
+        stmt = select(Object.key).join(ScopeList).join(Scope).where(Scope.name == scope)
         result = await session.execute(stmt)
-        for name, in result:
+        for (name,) in result:
             yield name
 
 

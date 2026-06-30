@@ -20,7 +20,9 @@ class Scope(SQLModel, table=True):
 
 class ScopeList(SQLModel, table=True):
     scope_id: int = Field(primary_key=True, foreign_key="scope.id", ondelete="CASCADE")
-    object_id: int = Field(primary_key=True, foreign_key="object.id", ondelete="RESTRICT")
+    object_id: int = Field(
+        primary_key=True, foreign_key="object.id", ondelete="RESTRICT"
+    )
 
 
 class Shard(SQLModel, table=True):
@@ -50,10 +52,12 @@ async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -
         session.add(shard)
         await session.flush()
 
-        session.add_all([
-            Object(key=key, shard_id=shard.id, offset=off, end=end)
-            for key, off, end in items
-        ])
+        session.add_all(
+            [
+                Object(key=key, shard_id=shard.id, offset=off, end=end)
+                for key, off, end in items
+            ]
+        )
         await session.commit()
 
 
@@ -79,22 +83,16 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
             stmt = select(Object).where(col(Object.key).in_(batch))
             results = await session.exec(stmt)
 
-            session.add_all([
-                ScopeList(scope_id=scope_obj.id, object_id=obj.id)
-                for obj in results
-            ])
+            session.add_all(
+                [ScopeList(scope_id=scope_obj.id, object_id=obj.id) for obj in results]
+            )
             session.flush()
         await session.commit()
 
 
 async def export_scope(scope: str) -> AsyncIterator[str]:
     async with AsyncSession(engine) as session:
-        stmt = (
-            select(Object.key)
-            .join(ScopeList)
-            .join(Scope)
-            .where(Scope.name == scope)
-        )
+        stmt = select(Object.key).join(ScopeList).join(Scope).where(Scope.name == scope)
         result = await session.exec(stmt)
         for name in result:
             yield name

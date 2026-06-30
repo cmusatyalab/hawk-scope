@@ -9,7 +9,6 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from rich.table import Table
-from tqdm import tqdm
 
 from .db import delete_scope, export_scope, import_scope, list_scopes
 
@@ -19,6 +18,7 @@ app = typer.Typer(help="Add/remove scopes.", no_args_is_help=True)
 @app.command()
 def list() -> None:
     """Show a list of available scopes."""
+
     async def list_() -> None:
         table = Table()
         table.add_column("Scope", no_wrap=True)
@@ -45,12 +45,13 @@ def import_(scopefile: Path, scope: str | None = None) -> None:
     items = (line.strip() for line in scopefile.open())
     asyncio.run(import_scope(scope, items))
 
-    print(f"Scope from {scopefile} added as \"{scope}\".")
+    print(f'Scope from {scopefile} added as "{scope}".')
 
 
 @app.command()
 def export(scope: str) -> None:
     """Export a scope to stdout."""
+
     async def export_to_stdout(scope: str) -> None:
         async for key in export_scope(scope):
             print(key)

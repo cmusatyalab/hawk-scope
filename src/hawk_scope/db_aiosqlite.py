@@ -53,7 +53,7 @@ async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -
         shard_id = result.lastrowid
         await con.executemany(
             "INSERT INTO object (key, shard_id, offset, end) VALUES (?, ?, ?, ?)",
-            [(key, shard_id, off, end) for key, off, end in items]
+            [(key, shard_id, off, end) for key, off, end in items],
         )
 
 
@@ -74,14 +74,13 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
             result = await con.execute("INSERT INTO scope (name) VALUES (?)", (scope,))
             scope_id = result.lastrowid
         except aiosqlite.IntegrityError as err:
-            msg = f"Import error: \"{scope}\" scope already exists in database."
+            msg = f'Import error: "{scope}" scope already exists in database.'
             raise typer.Exit(msg) from err
 
         try:
             await con.execute("CREATE TEMP TABLE tmp_scope (key TEXT UNIQUE)")
             await con.executemany(
-                "INSERT INTO tmp_scope VALUES (?)",
-                [(key,) for key in items]
+                "INSERT INTO tmp_scope VALUES (?)", [(key,) for key in items]
             )
         except aiosqlite.IntegrityError as err:
             msg = "Import error: Duplicated object key in scope."
@@ -92,7 +91,7 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
                 "INSERT INTO scopelist "
                 "SELECT ?, object.id FROM tmp_scope "
                 "LEFT JOIN object on tmp_scope.key = object.key ",
-                (scope_id,)
+                (scope_id,),
             )
             await con.execute("DROP TABLE tmp_scope")
         except aiosqlite.IntegrityError as err:
@@ -113,19 +112,18 @@ async def export_scope(scope: str) -> AsyncIterator[str]:
             (scope,),
         ) as cur,
     ):
-        async for key, in cur:
+        async for (key,) in cur:
             yield key
 
 
 async def delete_scope(scope: str) -> None:
     async with aiosqlite.connect(SCOPEDB) as con:
         cur = await con.execute(
-            "SELECT scope.id FROM scope WHERE scope.name = ?",
-            (scope,)
+            "SELECT scope.id FROM scope WHERE scope.name = ?", (scope,)
         )
         result = await cur.fetchone()
         if result is None:
-            msg = f"Scope \"{scope}\" not found."
+            msg = f'Scope "{scope}" not found.'
             raise typer.Exit(msg)
 
         scope_id = result[0]
