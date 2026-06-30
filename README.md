@@ -28,6 +28,20 @@ uv run hawk-scope test wids <scope>   # print WIDS descriptor JSON for a scope
 uv run hawk-scope test shard <scope>  # generate a local tar shard file
 ```
 
+### Subcommands
+
+| Subcommand | Description |
+|---|---|
+| `serve [--host HOST] [--port PORT]` | Run the web server |
+| `db create` | Create a new empty scope database |
+| `db index <descriptor>` | Build an index for all objects in a webdataset |
+| `scope list` | Show a list of available scopes |
+| `scope import <file> [SCOPE]` | Import a new scope from a file |
+| `scope export <scope>` | Export a scope to stdout |
+| `scope delete <scope>` | Remove a scope |
+| `test wids <scope>` | Generate a WIDS JSON descriptor for a scope |
+| `test shard <scope>` | Generate a shard tar archive for a scope |
+
 ### Web server
 
 ```bash
@@ -58,14 +72,18 @@ All config comes from `.env` via `starlette.config.Config`:
 ## Architecture
 
 ```
-cli.py          → CLI entry (typer).
-web.py          → Starlette app with 3 routes: /, /{scope}.json, /{scope}-{shard}.tar
-slicer.py       → Core logic: generate WIDS descriptors, stream shard tars
-test.py         → CLI commands: test wids, test shard
-db_aiosqlite.py → Active DB layer (aiosqlite, raw SQL)
-db_sqlalchemy.py → Alternative DB layer (SQLAlchemy ORM)
-db_sqlmodel.py   → Alternative DB layer (SQLModel)
-settings.py      → Env-backed config
+src/hawk_scope/
+  cli.py          → CLI entry (typer). Subcommands: serve, db, scope, test
+  web.py          → Starlette app with 3 routes: /, /{scope}.json, /{scope}-{shard}.tar
+  slicer.py       → Core logic: generate WIDS descriptors, stream shard tars
+  test.py         → CLI commands: test wids, test shard
+  scope.py        → CLI commands: scope list, import, export, delete
+  db.py           → DB function re-exports + index generation logic + db CLI (create, index)
+  db_aiosqlite.py → Active DB layer (aiosqlite, raw SQL)
+  db_sqlalchemy.py → Alternative DB layer (SQLAlchemy ORM)
+  db_sqlmodel.py   → Alternative DB layer (SQLModel)
+  compat.py       → Python 3.10 compatibility shim (batched)
+  settings.py      → Env-backed config
 ```
 
 **Database schema** (4 tables: `shard`, `object`, `scope`, `scopelist`) — defined as raw SQL in `db_aiosqlite.py`.
