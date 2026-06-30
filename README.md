@@ -7,7 +7,7 @@ Server that slices subsets out of a larger webdataset collection.
 hawk-scope indexes webdataset shards into a SQLite database and serves scoped subsets as WIDS descriptors and streaming tar archives. It supports:
 
 - **WIDS descriptors** — JSON manifests describing shard layout and sample counts
-- **Streaming tar shards** — on-demand range-request fetches from remote webdataset archives
+- **Streaming webdataset shards** — Generated from on-demand range-request fetches from remote webdataset archives
 - **CLI tools** — generate descriptors and shards from the command line
 
 ## Installation
@@ -23,9 +23,7 @@ uv sync          # install dependencies from uv.lock
 ### CLI
 
 ```bash
-uv run hawk-scope serve               # start the web server (port 5000)
-uv run hawk-scope test wids <scope>   # print WIDS descriptor JSON for a scope
-uv run hawk-scope test shard <scope>  # generate a local tar shard file
+uv run hawk-scope <subcommand>
 ```
 
 ### Subcommands
@@ -34,9 +32,9 @@ uv run hawk-scope test shard <scope>  # generate a local tar shard file
 |---|---|
 | `serve [--host HOST] [--port PORT]` | Run the web server |
 | `db create` | Create a new empty scope database |
-| `db index <descriptor>` | Build an index for all objects in a webdataset |
+| `db index <webdataset url>` | Build an index for all objects in a webdataset |
 | `scope list` | Show a list of available scopes |
-| `scope import <file> [SCOPE]` | Import a new scope from a file |
+| `scope import [--scope SCOPE] <file>` | Import a new scope from a file |
 | `scope export <scope>` | Export a scope to stdout |
 | `scope delete <scope>` | Remove a scope |
 | `test wids <scope>` | Generate a WIDS JSON descriptor for a scope |
