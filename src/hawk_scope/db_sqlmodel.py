@@ -67,6 +67,7 @@ async def list_scopes() -> AsyncIterator[tuple[str, int]]:
             select(Scope.name, func.count(ScopeList.object_id))
             .join(ScopeList, isouter=True)
             .group_by(ScopeList.scope_id)
+            .order_by(Scope.name)
         )
         result = await session.exec(stmt)
         for name, n in result:

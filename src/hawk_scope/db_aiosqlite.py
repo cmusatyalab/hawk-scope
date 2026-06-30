@@ -62,7 +62,8 @@ async def list_scopes() -> AsyncIterator[tuple[str, int]]:
         result = await con.execute(
             "SELECT scope.name, COUNT(scopelist.object_id) FROM scope "
             "LEFT JOIN scopelist ON scope.id = scopelist.scope_id "
-            "GROUP BY scopelist.scope_id"
+            "GROUP BY scopelist.scope_id "
+            "ORDER BY scope.name"
         )
         async for scope, count in result:
             yield scope, count
