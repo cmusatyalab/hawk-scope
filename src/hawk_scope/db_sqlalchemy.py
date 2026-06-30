@@ -153,6 +153,7 @@ async def get_items_in_scope(
             .join(ScopeList)
             .join(Scope)
             .where(Scope.name == scope)
+            .order_by(Object.shard_id, Object.offset)
             .limit(limit)
             .offset(offset)
         )

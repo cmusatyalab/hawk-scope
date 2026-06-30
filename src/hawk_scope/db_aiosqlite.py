@@ -156,7 +156,9 @@ async def get_items_in_scope(
             "JOIN shard ON object.shard_id = shard.id "
             "JOIN scopelist ON object.id = scopelist.object_id "
             "JOIN scope ON scope.id = scopelist.scope_id "
-            "WHERE scope.name = ? LIMIT ? OFFSET ?",
+            "WHERE scope.name = ? "
+            "ORDER BY object.shard_id, object.offset "
+            "LIMIT ? OFFSET ?",
             (scope, limit, offset),
         )
         async for row in cur:

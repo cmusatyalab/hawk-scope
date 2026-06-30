@@ -12,7 +12,7 @@ import typer
 from braceexpand import braceexpand
 from tqdm import tqdm
 
-from .db_sqlmodel import (
+from .db_aiosqlite import (
     build_shard_index,
     count_items_in_scope,
     create_scope_db,
