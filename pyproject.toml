@@ -11,6 +11,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "aiosqlite>=0.22.1",
+    "anyio>=4.14.1",
     "braceexpand>=0.1.7",
     "niquests>=3.19.1",
     "rich>=15.0.0",

@@ -3,20 +3,26 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
 import typer
 from starlette.applications import Starlette
-from starlette.responses import FileResponse, JSONResponse, StreamingResponse
+from starlette.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from . import settings
-from .db import get_items_in_scope
+from .db import export_scope, get_items_in_scope, import_scope
 from .slicer import generate_shard, generate_wids_descriptor
 
 if TYPE_CHECKING:
     from starlette.requests import Request
+
+
+async def root(request: Request) -> FileResponse:
+    animation = files("hawk_scope").joinpath("webdataset-animation.html")
+    return FileResponse(animation, media_type="text/html")
 
 
 async def get_wids(request: Request) -> JSONResponse:
@@ -34,9 +40,44 @@ async def get_shard(request: Request) -> StreamingResponse:
     return StreamingResponse(object_stream, media_type="application/x-tar")
 
 
-async def root(request: Request) -> FileResponse:
-    animation = files("hawk_scope").joinpath("webdataset-animation.html")
-    return FileResponse(animation, media_type="text/html")
+async def get_scope(request: Request) -> StreamingResponse:
+    scope = request.path_params["scope"]
+    items = (f"{key}\n" async for key in export_scope(scope))
+    return StreamingResponse(items, media_type="text/plain")
+
+
+async def create_scope(request: Request) -> Response:
+    async def scope_items(request: Request) -> AsyncIterator[str]:
+        """Helper to convert a stream of binary chunks to lines"""
+        body = ""
+        async for chunk in request.stream():
+            body += chunk.decode()
+            while "\n" in body:
+                line, body = body.split("\n", 1)
+                line = line.strip()
+                if line:
+                    yield line
+            # handle the case when there are no newlines in the input
+            if len(body) > 4096:
+                msg = "Input line too long"
+                raise BufferError(msg)
+        line = body.strip()
+        if line:
+            yield line
+
+    scope = request.path_params["scope"]
+    try:
+        await import_scope(scope, scope_items(request))
+        return Response(status_code=204)
+    except FileExistsError as e:
+        # scope already exists
+        return Response(e.args[0], status_code=409)
+    except KeyError as e:
+        # Duplicate or unknown object in scope list
+        return Response(e.args[0], status_code=400)
+    except (BufferError, UnicodeDecodeError):
+        # unable to parse the request.body stream to object ids
+        return Response("Unable to process scope list", status_code=400)
 
 
 app = Starlette(
@@ -45,6 +86,8 @@ app = Starlette(
         Route("/", root),
         Route("/{scope}.json", get_wids),
         Route("/{scope}-{shard:int}.tar", get_shard, name="shard"),
+        Route("/{scope}.scope", get_scope),
+        Route("/{scope}.scope", create_scope, methods=["POST"]),
     ],
 )
 

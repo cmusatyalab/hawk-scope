@@ -275,6 +275,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
+    { name = "anyio" },
     { name = "braceexpand" },
     { name = "niquests" },
     { name = "rich" },
@@ -297,6 +298,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
+    { name = "anyio", specifier = ">=4.14.1" },
     { name = "braceexpand", specifier = ">=0.1.7" },
     { name = "niquests", specifier = ">=3.19.1" },
     { name = "rich", specifier = ">=15.0.0" },
