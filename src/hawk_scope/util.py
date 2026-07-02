@@ -11,6 +11,10 @@ import anyio
 
 V = TypeVar("V")
 
+# Theoretical max path length in a tar archive with PAX extensions
+# we will probably never see keys this long (or longer).
+MAX_KEY_LENGTH = 32767
+
 
 # I don't want the python3.12 dependency just yet, here is a
 # 'itertools.batched' implementation.
@@ -43,8 +47,8 @@ async def chunks_to_lines(stream: AsyncIterable[bytes]) -> AsyncIterator[str]:
             line = bline.decode().strip()
             if line:
                 yield line
-        # handle the case when there are no newlines in the input
-        if len(body) > 4096:
+        # DoS protection for when there are no newlines in the input
+        if len(body) > MAX_KEY_LENGTH:
             msg = "Input line too long"
             raise BufferError(msg)
     line = body.decode().strip()
