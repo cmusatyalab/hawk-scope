@@ -8,7 +8,6 @@ from collections.abc import AsyncIterator
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
-import typer
 from rich import print
 from starlette.applications import Starlette
 from starlette.authentication import (
@@ -39,9 +38,17 @@ class APIKeyAuthBackend(AuthenticationBackend):
 
         api_key = conn.headers["X-API-Key"]
         if api_key != str(settings.API_KEY):
-            raise AuthenticationError("Invalid X-API-Key")
+            raise AuthenticationError("Invalid API key")
 
         return AuthCredentials(["apikey"]), SimpleUser("API")
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: Starlette) -> AsyncIterator[None]:
+    if str(settings.API_KEY) == str(settings.SESSION_KEY):
+        print(f"[red]NOTE:[/red]\t  Temporary API key is: {settings.API_KEY}")
+    yield
+    # cleanup
 
 
 async def root(request: Request) -> FileResponse:
@@ -88,11 +95,11 @@ async def create_scope(request: Request) -> Response:
         return Response("Unable to process scope list", status_code=400)
 
 
-@contextlib.asynccontextmanager
-async def lifespan(app: Starlette) -> AsyncIterator[None]:
-    if str(settings.API_KEY) == str(settings.SESSION_KEY):
-        print(f"[red]NOTE:[/red]\t  Temporary API key is: {settings.API_KEY}")
-    yield
+@requires("apikey")
+async def delete_scope(request: Request) -> Response:
+    scope = request.path_params["scope"]
+    await delete_scope(scope)
+    return Response(status_code=204)
 
 
 app = Starlette(
@@ -102,24 +109,11 @@ app = Starlette(
         Route("/{scope}.json", get_wids),
         Route("/{scope}-{shard:int}.tar", get_shard, name="shard"),
         Route("/{scope}.scope", get_scope),
-        Route("/{scope}.scope", create_scope, methods=["POST"]),
+        Route("/{scope}.scope", create_scope, methods=["POST", "PUT"]),
+        Route("/{scope}.scope", delete_scope, methods=["DELETE"]),
     ],
     middleware=[
         Middleware(AuthenticationMiddleware, backend=APIKeyAuthBackend()),
     ],
     lifespan=lifespan,
 )
-
-cli = typer.Typer()
-
-
-@cli.command()
-def serve(host: str = "0.0.0.0", port: int = 5000) -> None:
-    """Run a webserver instance to generate scoped datasets."""
-    import uvicorn
-
-    uvicorn.run("hawk_scope.web:app", host=host, port=port, log_level="info")
-
-
-if __name__ == "__main__":
-    cli()

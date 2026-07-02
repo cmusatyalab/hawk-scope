@@ -46,7 +46,9 @@ async def create_scope_db() -> None:
         await con.executescript(SCOPEDB_SCHEMA)
 
 
-async def build_shard_index(shard: str, items: AsyncIterable[tuple[str, int, int]]) -> None:
+async def build_shard_index(
+    shard: str, items: AsyncIterable[tuple[str, int, int]]
+) -> None:
     async with aiosqlite.connect(SCOPEDB) as con:
         result = await con.execute("INSERT INTO shard (url) VALUES (?)", (shard,))
         shard_id = result.lastrowid

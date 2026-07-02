@@ -89,7 +89,11 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
             results = await session.exec(stmt)
 
             session.add_all(
-                [ScopeList(scope_id=scope_obj.id, object_id=obj.id) for obj in results if obj.id is not None]
+                [
+                    ScopeList(scope_id=scope_obj.id, object_id=obj.id)
+                    for obj in results
+                    if obj.id is not None
+                ]
             )
             await session.flush()
         await session.commit()
@@ -97,7 +101,12 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
 
 async def export_scope(scope: str) -> AsyncIterator[str]:
     async with AsyncSession(engine) as session:
-        stmt = select(Object.key).join(ScopeList).join(Scope).where(col(Scope.name) == scope)
+        stmt = (
+            select(Object.key)
+            .join(ScopeList)
+            .join(Scope)
+            .where(col(Scope.name) == scope)
+        )
         result = await session.exec(stmt)
         for name in result:
             yield name
