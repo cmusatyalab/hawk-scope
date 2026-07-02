@@ -57,6 +57,12 @@ def generate_shard_index(url: str) -> Iterator[tuple[str, int, int]]:
                 yield obj_key, obj_off, obj_end
 
 
+async def index_shards(shards: list[str]) -> None:
+    async for shard in tqdm(shards, unit=" shards"):
+        items = tqdm(generate_shard_index(shard), unit=" objects")
+        await build_shard_index(shard, items)
+
+
 app = typer.Typer(help="Manipulate the scope database.", no_args_is_help=True)
 
 
@@ -70,9 +76,7 @@ def create() -> None:
 def index(descriptor: str) -> None:
     """Build an index for all objects in a webdataset."""
     shards = list(braceexpand(descriptor))
-    for shard in tqdm(shards, unit=" shards"):
-        items = tqdm(generate_shard_index(shard), unit=" objects")
-        asyncio.run(build_shard_index(shard, items))
+    asyncio.run(index_shards(shards))
 
 
 if __name__ == "__main__":
