@@ -9,6 +9,7 @@ hawk-scope indexes webdataset shards into a SQLite database and serves scoped su
 - **WIDS descriptors** — JSON manifests describing shard layout and sample counts
 - **Streaming webdataset shards** — Generated from on-demand range-request fetches from remote webdataset archives
 - **CLI tools** — generate descriptors and shards from the command line
+- **REST API** — create, list, and delete scopes over HTTP
 
 ## Installation
 
@@ -46,13 +47,40 @@ uv run hawk-scope <subcommand>
 uv run hawk-scope serve
 ```
 
-Serves on `0.0.0.0:5000` by default. Three endpoints:
+Serves on `0.0.0.0:5000` by default.
 
-| Endpoint | Description |
-|---|---|
-| `GET /` | HTML animation page |
-| `GET /{scope}.json` | WIDS descriptor JSON |
-| `GET /{scope}-{shard}.tar` | Streaming tar shard |
+### REST API
+
+The following endpoints are available:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | HTML animation page |
+| `GET` | `/{scope}.json` | WIDS descriptor JSON |
+| `GET` | `/{scope}-{shard}.tar` | Streaming tar shard |
+| `GET` | `/{scope}.scope` | List object keys in scope (one per line) |
+| `POST` | `/{scope}.scope` | Create a new scope (body: one key per line) |
+| `PUT` | `/{scope}.scope` | Same as POST |
+| `DELETE` | `/{scope}.scope` | Delete a scope |
+
+All `POST`, `PUT`, and `DELETE` endpoints require an API key via the `X-API-Key` header. If no `API_KEY` is configured, a temporary key is generated and printed to stdout on startup.
+
+### Creating a scope via HTTP
+
+Send a plaintext body with one object key per line:
+
+```bash
+curl -X POST http://localhost:5000/my-scope.scope \
+  -H "X-API-Key: your-key" \
+  --data-binary @keys.txt
+```
+
+### Deleting a scope via HTTP
+
+```bash
+curl -X DELETE http://localhost:5000/my-scope.scope \
+  -H "X-API-Key: your-key"
+```
 
 ## Configuration
 
@@ -64,27 +92,9 @@ All config comes from `.env` via `starlette.config.Config`:
 | `BATCH_SIZE` | `10000` | Objects per shard |
 | `FETCH_WINDOW` | `64` | Concurrent range-request fetches |
 | `DEBUG` | `false` | Enable debug mode |
+| `API_KEY` | auto-generated | API key for authenticated endpoints |
 
 `.env` is gitignored.
-
-## Architecture
-
-```
-src/hawk_scope/
-  cli.py          → CLI entry (typer). Subcommands: serve, db, scope, test
-  web.py          → Starlette app with 3 routes: /, /{scope}.json, /{scope}-{shard}.tar
-  slicer.py       → Core logic: generate WIDS descriptors, stream shard tars
-  test.py         → CLI commands: test wids, test shard
-  scope.py        → CLI commands: scope list, import, export, delete
-  db.py           → DB function re-exports + index generation logic + db CLI (create, index)
-  db_aiosqlite.py → Active DB layer (aiosqlite, raw SQL)
-  db_sqlalchemy.py → Alternative DB layer (SQLAlchemy ORM)
-  db_sqlmodel.py   → Alternative DB layer (SQLModel)
-  compat.py       → Python 3.10 compatibility shim (batched)
-  settings.py      → Env-backed config
-```
-
-**Database schema** (4 tables: `shard`, `object`, `scope`, `scopelist`) — defined as raw SQL in `db_aiosqlite.py`.
 
 ## License
 
