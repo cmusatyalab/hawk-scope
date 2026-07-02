@@ -97,9 +97,12 @@ async def create_scope(request: Request) -> Response:
 
 @requires("apikey")
 async def delete_scope(request: Request) -> Response:
-    scope = request.path_params["scope"]
-    await delete_scope(scope)
-    return Response(status_code=204)
+    try:
+        scope = request.path_params["scope"]
+        await delete_scope(scope)
+        return Response(status_code=204)
+    except KeyError:
+        return Response("Scope not found", status_code=404)
 
 
 app = Starlette(
