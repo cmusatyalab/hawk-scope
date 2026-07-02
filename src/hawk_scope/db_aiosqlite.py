@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterable, AsyncIterator
+from contextlib import suppress
 
 import aiosqlite
 
@@ -100,7 +101,8 @@ async def import_scope(scope: str, items: AsyncIterable[str]) -> None:
                 msg = "Unknown object in scope"
                 raise KeyError(msg) from err
         finally:
-            await con.execute("DROP TABLE tmp_scope")
+            with suppress(aiosqlite.Error):
+                await con.execute("DROP TABLE tmp_scope")
         await con.commit()
 
 
