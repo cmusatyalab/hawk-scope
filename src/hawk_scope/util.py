@@ -35,18 +35,18 @@ async def async_reader(path: Path | str) -> AsyncIterator[str]:
 
 async def chunks_to_lines(stream: AsyncIterable[bytes]) -> AsyncIterator[str]:
     """Helper to convert a stream of binary chunks to lines"""
-    body = ""
+    body = b""
     async for chunk in stream:
-        body += chunk.decode()
-        while "\n" in body:
-            line, body = body.split("\n", 1)
-            line = line.strip()
+        body += chunk
+        while b"\n" in body:
+            bline, body = body.split(b"\n", 1)
+            line = bline.decode().strip()
             if line:
                 yield line
         # handle the case when there are no newlines in the input
         if len(body) > 4096:
             msg = "Input line too long"
             raise BufferError(msg)
-    line = body.strip()
+    line = body.decode().strip()
     if line:
         yield line
