@@ -3,12 +3,23 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+import contextlib
+from collections.abc import AsyncIterable, AsyncIterator
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
 import typer
+from rich import print
 from starlette.applications import Starlette
+from starlette.authentication import (
+    AuthCredentials,
+    AuthenticationBackend,
+    AuthenticationError,
+    SimpleUser,
+    requires,
+)
+from starlette.middleware import Middleware
+from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
@@ -18,6 +29,18 @@ from .slicer import generate_shard, generate_wids_descriptor
 
 if TYPE_CHECKING:
     from starlette.requests import Request
+
+
+class APIKeyAuthBackend(AuthenticationBackend):
+    async def authenticate(self, conn):
+        if "X-API-Key" not in conn.headers:
+            return
+
+        api_key = conn.headers["X-API-Key"]
+        if api_key != str(settings.API_KEY):
+            raise AuthenticationError("Invalid X-API-Key")
+
+        return AuthCredentials(["apikey"]), SimpleUser("API")
 
 
 async def root(request: Request) -> FileResponse:
@@ -46,28 +69,31 @@ async def get_scope(request: Request) -> StreamingResponse:
     return StreamingResponse(items, media_type="text/plain")
 
 
-async def create_scope(request: Request) -> Response:
-    async def scope_items(request: Request) -> AsyncIterator[str]:
-        """Helper to convert a stream of binary chunks to lines"""
-        body = ""
-        async for chunk in request.stream():
-            body += chunk.decode()
-            while "\n" in body:
-                line, body = body.split("\n", 1)
-                line = line.strip()
-                if line:
-                    yield line
-            # handle the case when there are no newlines in the input
-            if len(body) > 4096:
-                msg = "Input line too long"
-                raise BufferError(msg)
-        line = body.strip()
-        if line:
-            yield line
+async def chunks_to_lines(stream: AsyncIterable[bytes]) -> AsyncIterator[str]:
+    """Helper to convert a stream of binary chunks to lines"""
+    body = ""
+    async for chunk in stream:
+        body += chunk.decode()
+        while "\n" in body:
+            line, body = body.split("\n", 1)
+            line = line.strip()
+            if line:
+                yield line
+        # handle the case when there are no newlines in the input
+        if len(body) > 4096:
+            msg = "Input line too long"
+            raise BufferError(msg)
+    line = body.strip()
+    if line:
+        yield line
 
+
+@requires("apikey")
+async def create_scope(request: Request) -> Response:
     scope = request.path_params["scope"]
     try:
-        await import_scope(scope, scope_items(request))
+        items = chunks_to_lines(request.stream())
+        await import_scope(scope, items)
         return Response(status_code=204)
     except FileExistsError as e:
         # scope already exists
@@ -80,6 +106,13 @@ async def create_scope(request: Request) -> Response:
         return Response("Unable to process scope list", status_code=400)
 
 
+@contextlib.asynccontextmanager
+async def lifespan(app: Starlette) -> None:
+    if str(settings.API_KEY) == str(settings.SESSION_KEY):
+        print(f"[red]NOTE:[/red]\t  Temporary API key is: {settings.API_KEY}")
+    yield
+
+
 app = Starlette(
     debug=settings.DEBUG,
     routes=[
@@ -89,6 +122,10 @@ app = Starlette(
         Route("/{scope}.scope", get_scope),
         Route("/{scope}.scope", create_scope, methods=["POST"]),
     ],
+    middleware=[
+        Middleware(AuthenticationMiddleware, backend=APIKeyAuthBackend()),
+    ],
+    lifespan=lifespan,
 )
 
 cli = typer.Typer()
