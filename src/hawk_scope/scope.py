@@ -41,12 +41,14 @@ def import_(scopefile: Path, scope: str | None = None) -> None:
         scope = scopefile.stem
 
     if not scopefile.is_file():
-        raise typer.Exit(f"Scope {scopefile} does not exist")
+        print(f"Scope {scopefile} does not exist")
+        raise typer.Exit()
 
     try:
         asyncio.run(import_scope(scope, async_reader(scopefile)))
     except (FileExistsError, KeyError) as err:
-        raise typer.Exit(err.args[0]) from err
+        print(err.args[0])
+        raise typer.Exit() from err
 
     print(f'Scope from {scopefile} added as "{scope}".')
 
@@ -68,7 +70,8 @@ def delete(scope: str) -> None:
     try:
         asyncio.run(delete_scope(scope))
     except KeyError as err:
-        raise typer.Exit(err.args[0]) from err
+        print(err.args[0])
+        raise typer.Exit() from err
 
 
 if __name__ == "__main__":

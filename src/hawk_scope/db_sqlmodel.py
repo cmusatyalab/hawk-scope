@@ -48,13 +48,15 @@ async def create_scope_db():
 
 async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -> None:
     async with AsyncSession(engine) as session:
-        shard = Shard(url=shard)
-        session.add(shard)
+        shard_obj = Shard(url=shard)
+        session.add(shard_obj)
+
         await session.flush()
+        assert shard_obj.id is not None
 
         session.add_all(
             [
-                Object(key=key, shard_id=shard.id, offset=off, end=end)
+                Object(key=key, shard_id=shard_obj.id, offset=off, end=end)
                 for key, off, end in items
             ]
         )
@@ -64,10 +66,10 @@ async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -
 async def list_scopes() -> AsyncIterator[tuple[str, int]]:
     async with AsyncSession(engine) as session:
         stmt = (
-            select(Scope.name, func.count(ScopeList.object_id))
+            select(Scope.name, func.count(col(ScopeList.object_id)))
             .join(ScopeList, isouter=True)
-            .group_by(ScopeList.scope_id)
-            .order_by(Scope.name)
+            .group_by(col(ScopeList.scope_id))
+            .order_by(col(Scope.name).asc())
         )
         result = await session.exec(stmt)
         for name, n in result:
@@ -78,22 +80,24 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
     async with AsyncSession(engine) as session:
         scope_obj = Scope(name=scope)
         session.add(scope_obj)
+
         await session.flush()
+        assert scope_obj.id is not None
 
         for batch in batched(items, 1000):
             stmt = select(Object).where(col(Object.key).in_(batch))
             results = await session.exec(stmt)
 
             session.add_all(
-                [ScopeList(scope_id=scope_obj.id, object_id=obj.id) for obj in results]
+                [ScopeList(scope_id=scope_obj.id, object_id=obj.id) for obj in results if obj.id is not None]
             )
-            session.flush()
+            await session.flush()
         await session.commit()
 
 
 async def export_scope(scope: str) -> AsyncIterator[str]:
     async with AsyncSession(engine) as session:
-        stmt = select(Object.key).join(ScopeList).join(Scope).where(Scope.name == scope)
+        stmt = select(Object.key).join(ScopeList).join(Scope).where(col(Scope.name) == scope)
         result = await session.exec(stmt)
         for name in result:
             yield name
@@ -105,7 +109,7 @@ async def delete_scope(scope: str) -> None:
         result = await session.exec(stmt)
         scope_obj = result.one()
 
-        stmt = delete(ScopeList).where(ScopeList.scope_id == scope_obj.id)
+        stmt = delete(ScopeList).where(col(ScopeList.scope_id) == col(scope_obj.id))
         await session.exec(stmt)
         await session.delete(scope_obj)
         await session.commit()
@@ -137,7 +141,7 @@ async def get_items_in_scope(
             .join(ScopeList)
             .join(Scope)
             .where(Scope.name == scope)
-            .order_by(Object.shard_id, Object.offset)
+            .order_by(col(Object.shard_id).asc(), col(Object.offset).asc())
             .limit(limit)
             .offset(offset)
         )

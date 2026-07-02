@@ -58,15 +58,17 @@ async def create_scope_db() -> None:
 
 async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -> None:
     async with AsyncSession(engine) as session:
-        shard = Shard(url=shard)
-        session.add(shard)
+        shard_obj = Shard(url=shard)
+        session.add(shard_obj)
+
         await session.flush()
+        assert shard_obj.id is not None
 
         # There is no real reason to batch here, I think
         # the typical shard contains only about 10k-25k object
         session.add_all(
             [
-                Object(key=key, shard_id=shard.id, offset=off, end=end)
+                Object(key=key, shard_id=shard_obj.id, offset=off, end=end)
                 for key, off, end in items
             ]
         )
@@ -105,7 +107,7 @@ async def import_scope(scope: str, items: Iterable[str]) -> None:
                     for (obj,) in results
                 ]
             )
-            session.flush()
+            await session.flush()
         await session.commit()
 
 

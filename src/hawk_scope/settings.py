@@ -18,4 +18,4 @@ BATCH_SIZE: int = config("BATCH_SIZE", cast=int, default=10_000)
 FETCH_WINDOW: int = config("FETCH_WINDOW", cast=int, default=64)
 
 SESSION_KEY = Secret(secrets.token_urlsafe())
-API_KEY: Secret = config("API_KEY", cast=Secret, default=str(SESSION_KEY))
+API_KEY: Secret | str = config("API_KEY", cast=Secret, default=str(SESSION_KEY))

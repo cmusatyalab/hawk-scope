@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import contextlib
+from collections.abc import AsyncIterator
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
@@ -45,7 +46,7 @@ class APIKeyAuthBackend(AuthenticationBackend):
 
 async def root(request: Request) -> FileResponse:
     animation = files("hawk_scope").joinpath("webdataset-animation.html")
-    return FileResponse(animation, media_type="text/html")
+    return FileResponse(str(animation), media_type="text/html")
 
 
 async def get_wids(request: Request) -> JSONResponse:
@@ -88,7 +89,7 @@ async def create_scope(request: Request) -> Response:
 
 
 @contextlib.asynccontextmanager
-async def lifespan(app: Starlette) -> None:
+async def lifespan(app: Starlette) -> AsyncIterator[None]:
     if str(settings.API_KEY) == str(settings.SESSION_KEY):
         print(f"[red]NOTE:[/red]\t  Temporary API key is: {settings.API_KEY}")
     yield

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterable, AsyncIterator
 
 import aiosqlite
 
@@ -46,13 +46,13 @@ async def create_scope_db() -> None:
         await con.executescript(SCOPEDB_SCHEMA)
 
 
-async def build_shard_index(shard: str, items: Iterable[tuple[str, int, int]]) -> None:
+async def build_shard_index(shard: str, items: AsyncIterable[tuple[str, int, int]]) -> None:
     async with aiosqlite.connect(SCOPEDB) as con:
         result = await con.execute("INSERT INTO shard (url) VALUES (?)", (shard,))
         shard_id = result.lastrowid
         await con.executemany(
             "INSERT INTO object (key, shard_id, offset, end) VALUES (?, ?, ?, ?)",
-            [(key, shard_id, off, end) for key, off, end in items],
+            [(key, shard_id, off, end) async for key, off, end in items],
         )
 
 
@@ -68,7 +68,7 @@ async def list_scopes() -> AsyncIterator[tuple[str, int]]:
             yield scope, count
 
 
-async def import_scope(scope: str, items: Iterable[str]) -> None:
+async def import_scope(scope: str, items: AsyncIterable[str]) -> None:
     async with aiosqlite.connect(SCOPEDB) as con:
         try:
             result = await con.execute("INSERT INTO scope (name) VALUES (?)", (scope,))
@@ -142,6 +142,7 @@ async def count_items_in_scope(scope: str) -> int:
             (scope,),
         )
         result = await cur.fetchone()
+        assert result is not None
         return result[0]
 
 

@@ -52,6 +52,7 @@ async def get_object(
     headers = {"Range": f"bytes={offset}-{end}"}
     response = await session.get(url, headers=headers)
     response.raise_for_status()
+    assert response.content is not None
     return response.content
 
 

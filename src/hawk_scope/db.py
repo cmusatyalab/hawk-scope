@@ -10,7 +10,7 @@ from collections.abc import Iterator
 import niquests
 import typer
 from braceexpand import braceexpand
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
 from .db_aiosqlite import (
     build_shard_index,
@@ -45,7 +45,7 @@ def generate_shard_index(url: str) -> Iterator[tuple[str, int, int]]:
             for entry in shard:
                 cur_key = entry.name.rsplit(".", 1)[0]
                 if obj_key != cur_key:
-                    if obj_end:
+                    if obj_key is not None:
                         yield obj_key, obj_off, obj_end
                     obj_key = cur_key
                     obj_off = entry.offset
@@ -53,7 +53,7 @@ def generate_shard_index(url: str) -> Iterator[tuple[str, int, int]]:
                 obj_end = shard.offset - 1
                 # print("#", entry.name, entry.offset, shard.offset)
             # yield the final object
-            if obj_end:
+            if obj_key is not None:
                 yield obj_key, obj_off, obj_end
 
 
