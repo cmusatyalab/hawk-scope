@@ -4,14 +4,18 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import suppress
 from typing import Any
 
 import niquests
+from tenacity import RetryError, TryAgain, retry, wait_exponential
 
 from . import settings
 from .db import count_items_in_scope
+
+logger = logging.getLogger(__name__)
 
 
 async def generate_wids_descriptor(scope: str, base_url: str) -> dict[str, Any]:
@@ -44,6 +48,7 @@ async def generate_wids_descriptor(scope: str, base_url: str) -> dict[str, Any]:
     return wids_descriptor
 
 
+@retry(wait=wait_exponential(multiplier=1, max=10))
 async def get_object(
     session: niquests.AsyncSession, url: str, offset: int, end: int
 ) -> bytes:
@@ -52,7 +57,9 @@ async def get_object(
     headers = {"Range": f"bytes={offset}-{end}"}
     response = await session.get(url, headers=headers)
     response.raise_for_status()
-    assert response.content is not None
+    if response.content is None:
+        logger.error(f"Received empty content from {url} ({offset}-{end})")
+        raise TryAgain
     return response.content
 
 
@@ -71,7 +78,11 @@ async def generate_shard(
             break
 
     while tasks:
-        yield await tasks.pop(0)
+        try:
+            yield await tasks.pop(0)
+        except RetryError:
+            logger.error("Timed out trying to fetch object")
+
         with suppress(StopAsyncIteration):
             url, start, end = await anext(items)
             tasks.append(asyncio.create_task(get_object(session, url, start, end)))
