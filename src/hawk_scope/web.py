@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import AsyncIterable, AsyncIterator
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
@@ -26,6 +25,7 @@ from starlette.routing import Route
 from . import settings
 from .db import export_scope, get_items_in_scope, import_scope
 from .slicer import generate_shard, generate_wids_descriptor
+from .util import chunks_to_lines
 
 if TYPE_CHECKING:
     from starlette.requests import Request
@@ -67,25 +67,6 @@ async def get_scope(request: Request) -> StreamingResponse:
     scope = request.path_params["scope"]
     items = (f"{key}\n" async for key in export_scope(scope))
     return StreamingResponse(items, media_type="text/plain")
-
-
-async def chunks_to_lines(stream: AsyncIterable[bytes]) -> AsyncIterator[str]:
-    """Helper to convert a stream of binary chunks to lines"""
-    body = ""
-    async for chunk in stream:
-        body += chunk.decode()
-        while "\n" in body:
-            line, body = body.split("\n", 1)
-            line = line.strip()
-            if line:
-                yield line
-        # handle the case when there are no newlines in the input
-        if len(body) > 4096:
-            msg = "Input line too long"
-            raise BufferError(msg)
-    line = body.strip()
-    if line:
-        yield line
 
 
 @requires("apikey")

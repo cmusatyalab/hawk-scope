@@ -4,15 +4,14 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
 from pathlib import Path
 
-import anyio
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from .db import delete_scope, export_scope, import_scope, list_scopes
+from .util import async_reader
 
 app = typer.Typer(help="Add/remove scopes.", no_args_is_help=True)
 
@@ -45,12 +44,7 @@ def import_(scopefile: Path, scope: str | None = None) -> None:
         raise typer.Exit(f"Scope {scopefile} does not exist")
 
     try:
-        async def async_lines(path: Path | str) -> AsyncIterator[str]:
-            async with await anyio.open_file(path) as f:
-                async for line in f:
-                    yield line.strip()
-
-        asyncio.run(import_scope(scope, async_lines(scopefile)))
+        asyncio.run(import_scope(scope, async_reader(scopefile)))
     except (FileExistsError, KeyError) as err:
         raise typer.Exit(err.args[0]) from err
 

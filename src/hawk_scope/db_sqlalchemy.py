@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from . import settings
-from .compat import batched
+from .util import batched
 
 
 class SQLTable(AsyncAttrs, DeclarativeBase):

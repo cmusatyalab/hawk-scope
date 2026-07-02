@@ -10,7 +10,7 @@ from sqlmodel import Field, SQLModel, col, delete, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from . import settings
-from .compat import batched
+from .util import batched
 
 
 class Scope(SQLModel, table=True):
