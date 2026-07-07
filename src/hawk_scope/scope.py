@@ -46,7 +46,7 @@ def import_(scopefile: Path, scope: str | None = None) -> None:
 
     try:
         nitems = asyncio.run(import_scope(scope, async_reader(scopefile)))
-    except (FileExistsError, KeyError) as err:
+    except FileExistsError as err:
         print(err.args[0])
         raise typer.Exit() from err
 

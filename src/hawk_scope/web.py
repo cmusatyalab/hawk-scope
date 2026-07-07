@@ -87,9 +87,6 @@ async def create_scope(request: Request) -> Response:
     except FileExistsError as e:
         # scope already exists
         return Response(e.args[0], status_code=409)
-    except KeyError as e:
-        # Duplicate or unknown object in scope list
-        return Response(e.args[0], status_code=400)
     except (BufferError, UnicodeDecodeError):
         # unable to parse the request.body stream to object ids
         return Response("Unable to process scope list", status_code=400)

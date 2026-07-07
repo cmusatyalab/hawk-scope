@@ -11,6 +11,7 @@ import niquests
 import typer
 from braceexpand import braceexpand
 from sqlalchemy import ForeignKey, delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from tqdm.asyncio import tqdm
@@ -96,8 +97,13 @@ async def list_scopes() -> AsyncIterator[tuple[str, int]]:
 
 async def import_scope(scope: str, items: AsyncIterable[str]) -> int:
     async with AsyncSession(engine) as session:
-        scope_obj = Scope(name=scope)
-        session.add(scope_obj)
+        try:
+            scope_obj = Scope(name=scope)
+            session.add(scope_obj)
+            await session.flush()
+        except IntegrityError as err:
+            msg = f"Scope {scope} already exists"
+            raise FileExistsError(msg) from err
 
         # Here we have to batch because the in_ operator only accepts up to N
         # variables, and a scope can easily refer to 200k objects or more.
