@@ -45,12 +45,12 @@ def import_(scopefile: Path, scope: str | None = None) -> None:
         raise typer.Exit()
 
     try:
-        asyncio.run(import_scope(scope, async_reader(scopefile)))
+        nitems = asyncio.run(import_scope(scope, async_reader(scopefile)))
     except (FileExistsError, KeyError) as err:
         print(err.args[0])
         raise typer.Exit() from err
 
-    print(f'Scope from {scopefile} added as "{scope}".')
+    print(f'Scope from {scopefile} added as "{scope}" with {nitems} items.')
 
 
 @app.command()

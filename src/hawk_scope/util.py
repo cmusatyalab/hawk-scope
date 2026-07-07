@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
+from collections.abc import AsyncIterable, AsyncIterator
 from pathlib import Path
 from typing import TypeVar
 
@@ -19,9 +19,9 @@ MAX_KEY_LENGTH = 32767
 # I don't want the python3.12 dependency just yet, here is a
 # 'itertools.batched' implementation.
 # Probably not as efficient, but it should work
-def batched(iterable: Iterable[V], size: int) -> Iterator[list[V]]:
+async def batched(iterable: AsyncIterable[V], size: int) -> AsyncIterator[list[V]]:
     batch = []
-    for item in iterable:
+    async for item in iterable:
         batch.append(item)
         if len(batch) == size:
             yield batch
