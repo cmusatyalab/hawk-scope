@@ -82,8 +82,8 @@ async def create_scope(request: Request) -> Response:
     scope = request.path_params["scope"]
     try:
         items = chunks_to_lines(request.stream())
-        await import_scope(scope, items)
-        return Response(status_code=204)
+        nitems = await import_scope(scope, items)
+        return Response(f'Created "{scope}" with {nitems} items', status_code=200)
     except FileExistsError as e:
         # scope already exists
         return Response(e.args[0], status_code=409)
@@ -99,7 +99,7 @@ async def delete_scope(request: Request) -> Response:
         await delete_scope(scope)
         return Response(status_code=204)
     except KeyError:
-        return Response("Scope not found", status_code=404)
+        return Response(f'Scope "{scope}" not found', status_code=404)
 
 
 app = Starlette(
