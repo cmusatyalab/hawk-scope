@@ -24,12 +24,14 @@ def db_file(tmp_path: Path) -> Path:
 @pytest_asyncio.fixture
 async def engine(db_file: Path) -> AsyncIterator[Any]:
     """Create an async SQLAlchemy engine pointing to a temp file DB."""
+    import hawk_scope.db
     import hawk_scope.settings
 
     db_url = f"sqlite+aiosqlite:///{db_file}"
     hawk_scope.settings.DATABASE_URL = db_url
 
     eng = create_async_engine(db_url, echo=False)
+    hawk_scope.db.engine = eng
     async with eng.begin() as conn:
         await conn.run_sync(SQLTable.metadata.create_all)
     yield eng
