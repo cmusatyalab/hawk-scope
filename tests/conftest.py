@@ -109,8 +109,15 @@ def mock_http() -> Any:
                 raise AssertionError(f"Unexpected URL: {url}")
             content = url_responses[url]
             mock_resp = MagicMock()
-            mock_resp.content = content
             mock_resp.raise_for_status = MagicMock()
+            if headers and "Range" in headers:
+                range_header = headers["Range"]
+                range_match = range_header.replace("bytes=", "").split("-")
+                start = int(range_match[0])
+                end = int(range_match[1]) if range_match[1] else len(content) - 1
+                mock_resp.content = content[start : end + 1]
+            else:
+                mock_resp.content = content
             return mock_resp
 
         mock_session = MagicMock()
