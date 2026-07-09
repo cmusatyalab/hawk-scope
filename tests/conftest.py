@@ -38,6 +38,12 @@ async def engine(db_file: Path) -> AsyncIterator[Any]:
     await eng.dispose()
 
 
+@pytest.fixture
+def db(engine: Any) -> Any:
+    """Alias for engine, used by some tests."""
+    return engine
+
+
 @pytest_asyncio.fixture
 async def scope_data(engine: Any) -> None:
     """Populate the DB with known indexed shards and a scope.
